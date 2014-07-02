@@ -507,19 +507,28 @@ void function (bless) {
             return result;
         }],
 
-        [Number.prototype, 'to', function (limit, stepper) {
+        [Number.prototype, 'to', function (limit /*, func, stepper */) {
+            var args = slice(arguments);
+            args = args.splice(1, args.length);
 
-            var list = [],
-                i    = this.valueOf(),
-                continuePred;
-            
-            stepper = stepper || function (x) { return x + 1; };
+            var stepper = args.slice(-1)[0];
+            var func = (args[0] !== stepper)
+                ? args[0]
+                : function (x) { return x; };
 
-            continuePred = (stepper(i) > i) ? function (x) { return x <= limit; } :
-                                              function (x) { return x >= limit; };
+            stepper = stepper || (limit > this.valueOf()
+                ? function (x) { return x + 1; }
+                : function (x) { return x - 1; });
+
+            var list = [];
+            var i = this.valueOf();
+
+            var continuePred = (stepper(i) > i)
+                ? function (x) { return x <= limit; }
+                : function (x) { return x >= limit; };
 
             while (continuePred(i)) {
-                list.push(i);
+                list.push(func(i));
                 i = stepper(i);
             }
 
